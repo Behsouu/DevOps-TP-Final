@@ -1,8 +1,5 @@
-version: '3.8'
-
 services:
 
-  # Base de données PostgreSQL
   db:
     image: postgres:15-alpine
     environment:
@@ -15,7 +12,6 @@ services:
     ports:
       - "5432:5432"
 
-  # Backend Node.js
   backend:
     build: ./backend
     ports:
@@ -30,7 +26,6 @@ services:
     depends_on:
       - db
 
-  # Frontend React
   frontend:
     build:
       context: ./frontend
@@ -39,5 +34,28 @@ services:
     depends_on:
       - backend
 
+  # Prometheus : collecte les métriques du backend
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - backend
+
+  # Grafana : affiche le dashboard
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
 volumes:
   postgres_data:
+  grafana_data:
