@@ -1,0 +1,59 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Récupère le code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Installe Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # 3. Installe les dépendances backend
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm install
+
+      # 4. Vérifie que le backend démarre sans erreur
+      - name: Test backend health
+        run: |
+          cd backend
+          node -e "require('./index.js')" &
+          sleep 3
+          curl --fail http://localhost:3000/health || exit 1
+        env:
+          PORT: 3000
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_NAME: devops_tp
+
+      # 5. Installe les dépendances frontend
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm install
+
+      # 6. Build le frontend
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      # 7. Build les images Docker
+      - name: Build Docker images
+        run: docker-compose build
