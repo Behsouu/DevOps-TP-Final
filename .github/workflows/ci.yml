@@ -56,4 +56,4 @@ jobs:
 
       # 7. Build les images Docker
       - name: Build Docker images
-        run: docker-compose build
+        run: docker compose build
